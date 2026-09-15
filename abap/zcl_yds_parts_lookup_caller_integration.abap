@@ -1,14 +1,8 @@
 *&---------------------------------------------------------------------*
 *& Calling method integration (excerpt)
-*& Shows how GET_SLT is invoked after GET_ESD and how SLT is applied
-*& to the OData entity response.
 *&---------------------------------------------------------------------*
 
 METHOD get_parts_lookup_data.
-
-  DATA:
-    lt_slt TYPE ty_slt_tt,
-    ls_slt TYPE ty_slt.
 
   " ... existing logic to build lt_matnr, lt_status, lt_mvke ...
 
@@ -25,38 +19,34 @@ METHOD get_parts_lookup_data.
   get_slt(
     EXPORTING
       it_esd         = lt_esd
-      it_plant_lgort = gt_plant_lgort    " populated by SET_FIXED_VALUES
+      it_plant_lgort = gt_plant_lgort
     IMPORTING
-      et_slt         = lt_slt
+      et_slt         = DATA(lt_slt)
   ).
 
-  LOOP AT lt_result INTO DATA(ls_result).
-    CLEAR ls_result-slt.
-
-    " Only populate SLT when ESD = 'No ESD' and part is Active
-    IF ls_result-esd = gc_no_esd
-       AND ls_result-status = gc_status_active.
-
-      READ TABLE lt_slt INTO ls_slt
-        WITH KEY matnr = ls_result-matnr.
-      IF sy-subrc = 0.
-
-        READ TABLE lt_mvke INTO DATA(ls_mvke)
-          WITH KEY matnr = ls_result-matnr.
-        IF sy-subrc = 0 AND ls_mvke-mtpos = 'ZBNS'.
-          " Dropship display — prefix only; weeks text already in GET_SLT result
-          ls_result-slt = |Dropship - { ls_slt-slt }|.
-        ELSE.
-          ls_result-slt = ls_slt-slt.
-        ENDIF.
-
-        CLEAR ls_result-esd.
-      ENDIF.
-
-    ENDIF.
-
-    MODIFY lt_result FROM ls_result.
-  ENDLOOP.
+  lt_result = VALUE #(
+    FOR result IN lt_result
+    LET slt = VALUE ty_slt(
+          lt_slt[ matnr = result-matnr ] OPTIONAL
+        )
+    IN
+    (
+      VALUE #( BASE result
+        slt = COND char35(
+                WHEN result-esd = gc_slt-no_esd
+                 AND result-status = gc_status_active
+                 AND slt-matnr IS NOT INITIAL
+                THEN COND #( WHEN lt_mvke[ matnr = result-matnr OPTIONAL ]-mtpos = 'ZBNS'
+                             THEN |Dropship - { slt-slt }|
+                             ELSE slt-slt )
+                ELSE result-slt )
+        esd = COND #( WHEN result-esd = gc_slt-no_esd
+                       AND result-status = gc_status_active
+                       AND slt-matnr IS NOT INITIAL
+                      THEN space
+                      ELSE result-esd )
+      )
+    )
+  ).
 
 ENDMETHOD.
-

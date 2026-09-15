@@ -2,30 +2,46 @@
 *& Types for YDS Parts Lookup - Supplier Lead Time (SLT)
 *&---------------------------------------------------------------------*
 
-" ESD result structure (returned by get_esd)
-TYPES: BEGIN OF ty_esd,
-         matnr TYPE matnr,
-         esd   TYPE string,
-       END OF ty_esd,
-       ty_esd_tt TYPE STANDARD TABLE OF ty_esd WITH EMPTY KEY.
+TYPES:
+  BEGIN OF ty_esd,
+    matnr TYPE matnr,
+    esd   TYPE string,
+  END OF ty_esd,
+  ty_esd_tt TYPE STANDARD TABLE OF ty_esd WITH EMPTY KEY,
 
-" SLT result structure (returned by get_slt)
-TYPES: BEGIN OF ty_slt,
-         matnr TYPE matnr,
-         slt   TYPE char35,            " e.g. '6 weeks' or '1 week'
-       END OF ty_slt,
-       ty_slt_tt TYPE STANDARD TABLE OF ty_slt WITH NON-UNIQUE KEY matnr.
+  BEGIN OF ty_slt,
+    matnr TYPE matnr,
+    slt   TYPE char35,
+  END OF ty_slt,
+  ty_slt_tt TYPE STANDARD TABLE OF ty_slt WITH EMPTY KEY,
 
-" Plant / storage location configuration from SET_FIXED_VALUES
-TYPES: BEGIN OF ty_plant_lgort,
-         werks    TYPE werks_d,
-         lgort    TYPE lgort_d,
-         priority TYPE i,
-       END OF ty_plant_lgort,
-       ty_plant_lgort_tt TYPE STANDARD TABLE OF ty_plant_lgort
-                            WITH NON-UNIQUE KEY priority werks.
+  BEGIN OF ty_plant_lgort,
+    werks    TYPE werks_d,
+    lgort    TYPE lgort_d,
+    priority TYPE i,
+  END OF ty_plant_lgort,
+  ty_plant_lgort_tt TYPE STANDARD TABLE OF ty_plant_lgort
+                       WITH NON-UNIQUE KEY priority werks,
+
+  BEGIN OF ty_marc_slt,
+    matnr TYPE matnr,
+    werks TYPE werks_d,
+    plifz TYPE plifz,
+  END OF ty_marc_slt,
+  ty_marc_slt_tt TYPE HASHED TABLE OF ty_marc_slt
+                    WITH UNIQUE KEY matnr werks,
+  ty_matnr_tt    TYPE SORTED TABLE OF matnr WITH NON-UNIQUE KEY table_line,
+  ty_werks_range TYPE RANGE OF werks_d.
 
 CONSTANTS:
+  BEGIN OF gc_slt,
+    no_esd TYPE string VALUE 'No ESD',
+    week   TYPE char5  VALUE 'week',
+    weeks  TYPE char5  VALUE 'weeks',
+  END OF gc_slt.
+
+" Legacy aliases — align with existing references in calling code
+CONSTANTS:
   gc_no_esd TYPE string VALUE 'No ESD',
-  gc_week  TYPE char5  VALUE 'week',
-  gc_weeks TYPE char5  VALUE 'weeks'.
+  gc_week   TYPE char5  VALUE 'week',
+  gc_weeks  TYPE char5  VALUE 'weeks'.

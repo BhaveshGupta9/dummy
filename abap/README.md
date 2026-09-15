@@ -22,7 +22,16 @@ METHOD get_slt
     et_slt         TYPE ty_slt_tt.
 ```
 
-## Business rules implemented in GET_SLT
+## Modern ABAP features used
+
+- `FILTER` + `FOR GROUPS` for unique `No ESD` materials
+- `FINAL(...)` for immutable locals
+- Open SQL `SELECT FROM ... FIELDS ...`
+- `REDUCE` + `UNTIL` for plant-priority resolution
+- `VALUE #( FOR ... LET ... IN WHERE ... )` to build `et_slt` in one expression
+- `COND #(...)` for singular/plural week label
+
+## Business rules
 
 1. Only processes materials where `ESD = 'No ESD'`.
 2. Single `MARC` read for all relevant materials and plants.
