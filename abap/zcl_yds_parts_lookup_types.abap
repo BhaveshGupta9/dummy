@@ -15,23 +15,26 @@ TYPES:
   END OF ty_slt,
   ty_slt_tt TYPE STANDARD TABLE OF ty_slt WITH EMPTY KEY,
 
-  BEGIN OF ty_plant_lgort,
+  BEGIN OF ty_plant_lgpro,
     werks    TYPE werks_d,
-    lgort    TYPE lgort_d,
+    lgpro    TYPE lgort_d,           " MARC-LGPRO
     priority TYPE i,
-  END OF ty_plant_lgort,
-  ty_plant_lgort_tt TYPE STANDARD TABLE OF ty_plant_lgort
-                       WITH NON-UNIQUE KEY priority werks,
+  END OF ty_plant_lgpro,
+  ty_plant_lgpro_tt TYPE STANDARD TABLE OF ty_plant_lgpro
+                       WITH NON-UNIQUE KEY priority werks lgpro,
+
+  BEGIN OF ty_matnr_key,
+    matnr TYPE matnr,
+  END OF ty_matnr_key,
+  ty_matnr_key_tt TYPE SORTED TABLE OF ty_matnr_key WITH UNIQUE KEY matnr,
 
   BEGIN OF ty_marc_slt,
     matnr TYPE matnr,
     werks TYPE werks_d,
+    lgpro TYPE lgort_d,
     plifz TYPE plifz,
   END OF ty_marc_slt,
-  ty_marc_slt_tt TYPE HASHED TABLE OF ty_marc_slt
-                    WITH UNIQUE KEY matnr werks,
-  ty_matnr_tt    TYPE SORTED TABLE OF matnr WITH NON-UNIQUE KEY table_line,
-  ty_werks_range TYPE RANGE OF werks_d.
+  ty_marc_slt_tt TYPE STANDARD TABLE OF ty_marc_slt WITH EMPTY KEY.
 
 CONSTANTS:
   BEGIN OF gc_slt,
@@ -40,7 +43,6 @@ CONSTANTS:
     weeks  TYPE char5  VALUE 'weeks',
   END OF gc_slt.
 
-" Legacy aliases — align with existing references in calling code
 CONSTANTS:
   gc_no_esd TYPE string VALUE 'No ESD',
   gc_week   TYPE char5  VALUE 'week',

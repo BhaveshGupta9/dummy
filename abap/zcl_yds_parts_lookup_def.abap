@@ -1,5 +1,5 @@
 *&---------------------------------------------------------------------*
-*& Class definition excerpt - add to your existing OData DPC/DPC_EXT class
+*& Class definition excerpt
 *&---------------------------------------------------------------------*
 
 CLASS zcl_yds_parts_lookup DEFINITION
@@ -11,17 +11,16 @@ CLASS zcl_yds_parts_lookup DEFINITION
     TYPES:
       ty_esd_tt         TYPE ty_esd_tt,
       ty_slt_tt         TYPE ty_slt_tt,
-      ty_plant_lgort_tt TYPE ty_plant_lgort_tt.
+      ty_plant_lgpro_tt TYPE ty_plant_lgpro_tt.
 
     METHODS get_slt
       IMPORTING
-        it_esd         TYPE ty_esd_tt
-        it_plant_lgort TYPE ty_plant_lgort_tt
+        it_esd TYPE ty_esd_tt
       EXPORTING
-        et_slt         TYPE ty_slt_tt.
+        et_slt TYPE ty_slt_tt.
 
   PRIVATE SECTION.
-    DATA gt_plant_lgort TYPE ty_plant_lgort_tt.
+    DATA gt_plant_lgpro TYPE ty_plant_lgpro_tt.
 
     METHODS set_fixed_values
       IMPORTING

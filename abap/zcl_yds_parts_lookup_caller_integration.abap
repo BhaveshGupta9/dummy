@@ -18,10 +18,9 @@ METHOD get_parts_lookup_data.
 
   get_slt(
     EXPORTING
-      it_esd         = lt_esd
-      it_plant_lgort = gt_plant_lgort
+      it_esd = lt_esd
     IMPORTING
-      et_slt         = DATA(lt_slt)
+      et_slt = DATA(lt_slt)
   ).
 
   lt_result = VALUE #(

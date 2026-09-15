@@ -16,17 +16,18 @@ ABAP implementation for the **Supplier Lead Time** field on the YDS Parts Lookup
 ```abap
 METHOD get_slt
   IMPORTING
-    it_esd         TYPE ty_esd_tt
-    it_plant_lgort TYPE ty_plant_lgort_tt
+    it_esd TYPE ty_esd_tt
   EXPORTING
-    et_slt         TYPE ty_slt_tt.
+    et_slt TYPE ty_slt_tt.
 ```
+
+Uses class attribute `gt_plant_lgpro` (populated in `SET_FIXED_VALUES`).
 
 ## Modern ABAP features used
 
 - `FILTER` + `FOR GROUPS` for unique `No ESD` materials
 - `FINAL(...)` for immutable locals
-- Open SQL `SELECT FROM ... FIELDS ...`
+- Open SQL inner join on `MARC` + `gt_plant_lgpro` (no FAE)
 - `REDUCE` + `UNTIL` for plant-priority resolution
 - `VALUE #( FOR ... LET ... IN WHERE ... )` to build `et_slt` in one expression
 - `COND #(...)` for singular/plural week label
@@ -34,7 +35,7 @@ METHOD get_slt
 ## Business rules
 
 1. Only processes materials where `ESD = 'No ESD'`.
-2. Single `MARC` read for all relevant materials and plants.
+2. Single `MARC` read via inner join on `WERKS` + `LGPRO` against `gt_plant_lgpro`.
 3. Resolves plant fallback priority in memory (3035 → 3036 → 3037).
 4. Uses the first plant where the material exists, regardless of PLIFZ value (including 0).
 5. Calculates weeks: `CEIL( ( PLIFZ + 5 ) / 7 )` via `( PLIFZ + 11 ) DIV 7`.
