@@ -12,7 +12,7 @@ TYPES: BEGIN OF ty_esd,
 " SLT result structure (returned by get_slt)
 TYPES: BEGIN OF ty_slt,
          matnr TYPE matnr,
-         slt   TYPE char35,            " e.g. '6 week(s)'
+         slt   TYPE char35,            " e.g. '6 weeks' or '1 week'
        END OF ty_slt,
        ty_slt_tt TYPE STANDARD TABLE OF ty_slt WITH NON-UNIQUE KEY matnr.
 
@@ -34,5 +34,6 @@ TYPES: BEGIN OF ty_marc_plifz,
                            WITH UNIQUE KEY matnr.
 
 CONSTANTS:
-  gc_no_esd       TYPE string VALUE 'No ESD',
-  gc_weeks_suffix TYPE char10 VALUE 'week(s)'.
+  gc_no_esd TYPE string VALUE 'No ESD',
+  gc_week  TYPE char5  VALUE 'week',
+  gc_weeks TYPE char5  VALUE 'weeks'.
