@@ -25,13 +25,11 @@ METHOD get_slt
 ## Business rules implemented in GET_SLT
 
 1. Only processes materials where `ESD = 'No ESD'`.
-2. Reads `MARC-PLIFZ` using plant fallback priority:
-   - Plant **3035** (LGORT 3520) — first
-   - Plant **3036** (LGORT 3610) — second
-   - Plant **3037** (LGORT 3710) — third
-3. Uses the first plant where the material exists, regardless of PLIFZ value (including 0).
-4. Calculates weeks: `CEIL( ( PLIFZ + 5 ) / 7 )`.
-5. Returns `MATNR` + `SLT` as `CHAR35` formatted text, e.g. `1 week` or `6 weeks`.
+2. Single `MARC` read for all relevant materials and plants.
+3. Resolves plant fallback priority in memory (3035 → 3036 → 3037).
+4. Uses the first plant where the material exists, regardless of PLIFZ value (including 0).
+5. Calculates weeks: `CEIL( ( PLIFZ + 5 ) / 7 )` via `( PLIFZ + 11 ) DIV 7`.
+6. Returns `MATNR` + `SLT` as `CHAR35`, e.g. `1 week` or `6 weeks`.
 
 ## Handled by the calling method (not GET_SLT)
 

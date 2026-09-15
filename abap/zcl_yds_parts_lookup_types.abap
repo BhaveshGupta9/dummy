@@ -25,14 +25,6 @@ TYPES: BEGIN OF ty_plant_lgort,
        ty_plant_lgort_tt TYPE STANDARD TABLE OF ty_plant_lgort
                             WITH NON-UNIQUE KEY priority werks.
 
-" Internal helper for MARC reads during plant fallback
-TYPES: BEGIN OF ty_marc_plifz,
-         matnr TYPE matnr,
-         plifz TYPE plifz,
-       END OF ty_marc_plifz,
-       ty_marc_plifz_tt TYPE HASHED TABLE OF ty_marc_plifz
-                           WITH UNIQUE KEY matnr.
-
 CONSTANTS:
   gc_no_esd TYPE string VALUE 'No ESD',
   gc_week  TYPE char5  VALUE 'week',

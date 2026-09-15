@@ -1,91 +1,75 @@
 *&---------------------------------------------------------------------*
 *& Method GET_SLT
 *& Supplier Lead Time calculation for YDS Parts Lookup OData service
-*&
-*& Called after GET_ESD. Returns MATNR with SLT as 'XX week' / 'XX weeks'
-*& only for materials where ESD = 'No ESD'.
-*&
-*& Dropship prefix and Active / MTPOS checks are handled by the caller.
 *&---------------------------------------------------------------------*
 
 METHOD get_slt.
 
   TYPES:
-    BEGIN OF ty_matnr_line,
+    BEGIN OF ty_matnr_key,
       matnr TYPE matnr,
-    END OF ty_matnr_line.
+    END OF ty_matnr_key,
+    ty_matnr_tt TYPE SORTED TABLE OF ty_matnr_key WITH UNIQUE KEY matnr,
+    BEGIN OF ty_marc_slt,
+      matnr TYPE matnr,
+      werks TYPE werks_d,
+      plifz TYPE plifz,
+    END OF ty_marc_slt,
+    ty_marc_ht TYPE HASHED TABLE OF ty_marc_slt WITH UNIQUE KEY matnr werks.
 
   DATA:
-    lt_matnr_no_esd TYPE STANDARD TABLE OF ty_matnr_line WITH EMPTY KEY,
-    lt_remaining    TYPE STANDARD TABLE OF ty_matnr_line WITH EMPTY KEY,
-    lt_marc         TYPE STANDARD TABLE OF marc WITH EMPTY KEY,
-    lt_plifz        TYPE ty_marc_plifz_tt,
-    ls_plifz        TYPE ty_marc_plifz,
-    lv_weeks        TYPE i,
-    lv_plifz        TYPE plifz,
-    lv_week_label   TYPE char5.
+    lt_matnr TYPE ty_matnr_tt,
+    lt_marc  TYPE ty_marc_ht,
+    lt_werks TYPE RANGE OF werks_d,
+    lv_weeks TYPE i.
 
   CLEAR et_slt.
 
-  "--------------------------------------------------------------------
-  " 1. Keep only materials where ESD = 'No ESD'
-  "--------------------------------------------------------------------
+  " Unique materials where ESD = 'No ESD'
   LOOP AT it_esd INTO DATA(ls_esd) WHERE esd = gc_no_esd.
-    APPEND VALUE #( matnr = ls_esd-matnr ) TO lt_matnr_no_esd.
+    INSERT VALUE #( matnr = ls_esd-matnr ) INTO TABLE lt_matnr.
   ENDLOOP.
 
-  IF lt_matnr_no_esd IS INITIAL.
-    RETURN.
-  ENDIF.
+  CHECK lt_matnr IS NOT INITIAL
+    AND it_plant_lgort IS NOT INITIAL.
 
-  SORT lt_matnr_no_esd BY matnr.
-  DELETE ADJACENT DUPLICATES FROM lt_matnr_no_esd COMPARING matnr.
+  lt_werks = VALUE #(
+    FOR ls_plant IN it_plant_lgort
+    ( sign = 'I' option = 'EQ' low = ls_plant-werks )
+  ).
 
-  lt_remaining = lt_matnr_no_esd.
+  SELECT matnr, werks, plifz
+    FROM marc
+    FOR ALL ENTRIES IN @lt_matnr
+    WHERE matnr = @lt_matnr-matnr
+      AND werks IN @lt_werks
+    INTO CORRESPONDING FIELDS OF TABLE @lt_marc.
 
-  "--------------------------------------------------------------------
-  " 2. Read PLIFZ from MARC using plant priority from fixed values
-  "    Priority sequence: 3035 -> 3036 -> 3037 (set in SET_FIXED_VALUES)
-  "--------------------------------------------------------------------
-  LOOP AT it_plant_lgort INTO DATA(ls_plant) BY FIELD priority.
-    CHECK lt_remaining IS NOT INITIAL.
+  CHECK lt_marc IS NOT INITIAL.
 
-    SELECT matnr, plifz
-      FROM marc
-      FOR ALL ENTRIES IN @lt_remaining
-      WHERE matnr = @lt_remaining-matnr
-        AND werks = @ls_plant-werks
-      INTO CORRESPONDING FIELDS OF TABLE @lt_marc.
+  " First matching plant by priority wins; CEIL( ( PLIFZ + 5 ) / 7 )
+  LOOP AT lt_matnr INTO DATA(ls_matnr).
+    DATA(ls_marc) = VALUE ty_marc_slt( ).
+    DATA(lv_found) = abap_false.
 
-    LOOP AT lt_marc INTO DATA(ls_marc).
-      ls_plifz-matnr = ls_marc-matnr.
-      ls_plifz-plifz = ls_marc-plifz.
-      INSERT ls_plifz INTO TABLE lt_plifz.
-
-      DELETE lt_remaining WHERE matnr = ls_marc-matnr.
+    LOOP AT it_plant_lgort INTO DATA(ls_plant) BY FIELD priority.
+      READ TABLE lt_marc INTO ls_marc
+        WITH KEY matnr = ls_matnr-matnr
+                 werks = ls_plant-werks.
+      IF sy-subrc = 0.
+        lv_found = abap_true.
+        EXIT.
+      ENDIF.
     ENDLOOP.
 
-    CLEAR lt_marc.
-  ENDLOOP.
+    CHECK lv_found = abap_true.
 
-  "--------------------------------------------------------------------
-  " 3. Calculate weeks: CEIL( ( PLIFZ + 5 ) / 7 ), format as 'XX week(s)'
-  "--------------------------------------------------------------------
-  LOOP AT lt_plifz INTO ls_plifz.
-    lv_plifz = ls_plifz-plifz.
-
-    " ROUND UP: any fractional result rounds up to the next whole week
-    lv_weeks = ceil( conv decfloat34( lv_plifz + 5 ) / 7 ).
-
-    IF lv_weeks = 1.
-      lv_week_label = gc_week.
-    ELSE.
-      lv_week_label = gc_weeks.
-    ENDIF.
+    " Integer ceil: ( plifz + 5 + 6 ) DIV 7
+    lv_weeks = ( ls_marc-plifz + 11 ) DIV 7.
 
     APPEND VALUE #(
-      matnr = ls_plifz-matnr
-      slt   = |{ lv_weeks } { lv_week_label }|
+      matnr = ls_matnr-matnr
+      slt   = |{ lv_weeks } { COND char5( WHEN lv_weeks = 1 THEN gc_week ELSE gc_weeks ) }|
     ) TO et_slt.
   ENDLOOP.
 
