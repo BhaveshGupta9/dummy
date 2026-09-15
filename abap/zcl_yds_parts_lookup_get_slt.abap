@@ -2,11 +2,10 @@
 *& Method GET_SLT
 *& Supplier Lead Time calculation for YDS Parts Lookup OData service
 *&
-*& Called after GET_ESD. Returns MATNR with calculated weeks (SLT)
+*& Called after GET_ESD. Returns MATNR with SLT as 'XX week(s)'
 *& only for materials where ESD = 'No ESD'.
 *&
-*& Display formatting (week(s) text, dropship prefix, EN/FR) and
-*& Active / MTPOS checks are handled by the calling method.
+*& Dropship prefix and Active / MTPOS checks are handled by the caller.
 *&---------------------------------------------------------------------*
 
 METHOD get_slt.
@@ -69,7 +68,7 @@ METHOD get_slt.
   ENDLOOP.
 
   "--------------------------------------------------------------------
-  " 3. Calculate weeks: CEIL( ( PLIFZ + 5 ) / 7 )
+  " 3. Calculate weeks: CEIL( ( PLIFZ + 5 ) / 7 ), format as 'XX week(s)'
   "--------------------------------------------------------------------
   LOOP AT lt_plifz INTO ls_plifz.
     lv_plifz = ls_plifz-plifz.
@@ -79,7 +78,7 @@ METHOD get_slt.
 
     APPEND VALUE #(
       matnr = ls_plifz-matnr
-      slt   = lv_weeks
+      slt   = |{ lv_weeks } { gc_weeks_suffix }|
     ) TO et_slt.
   ENDLOOP.
 

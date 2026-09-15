@@ -12,7 +12,7 @@ TYPES: BEGIN OF ty_esd,
 " SLT result structure (returned by get_slt)
 TYPES: BEGIN OF ty_slt,
          matnr TYPE matnr,
-         slt   TYPE i,                 " Supplier lead time in whole weeks
+         slt   TYPE char35,            " e.g. '6 week(s)'
        END OF ty_slt,
        ty_slt_tt TYPE STANDARD TABLE OF ty_slt WITH NON-UNIQUE KEY matnr.
 
@@ -34,4 +34,5 @@ TYPES: BEGIN OF ty_marc_plifz,
                            WITH UNIQUE KEY matnr.
 
 CONSTANTS:
-  gc_no_esd TYPE string VALUE 'No ESD'.
+  gc_no_esd       TYPE string VALUE 'No ESD',
+  gc_weeks_suffix TYPE char10 VALUE 'week(s)'.

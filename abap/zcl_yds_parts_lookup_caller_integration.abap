@@ -7,9 +7,8 @@
 METHOD get_parts_lookup_data.
 
   DATA:
-    lt_slt      TYPE ty_slt_tt,
-    ls_slt      TYPE ty_slt,
-    lv_slt_text TYPE string.
+    lt_slt TYPE ty_slt_tt,
+    ls_slt TYPE ty_slt.
 
   " ... existing logic to build lt_matnr, lt_status, lt_mvke ...
 
@@ -45,16 +44,13 @@ METHOD get_parts_lookup_data.
         READ TABLE lt_mvke INTO DATA(ls_mvke)
           WITH KEY matnr = ls_result-matnr.
         IF sy-subrc = 0 AND ls_mvke-mtpos = 'ZBNS'.
-          " Dropship display
-          lv_slt_text = |{ TEXT-dropship_prefix } - { ls_slt-slt } { TEXT-weeks_suffix }|.
-          CLEAR ls_result-esd.
+          " Dropship display — prefix only; weeks text already in GET_SLT result
+          ls_result-slt = |Dropship - { ls_slt-slt }|.
         ELSE.
-          " Standard display
-          lv_slt_text = |{ ls_slt-slt } { TEXT-weeks_suffix }|.
-          CLEAR ls_result-esd.
+          ls_result-slt = ls_slt-slt.
         ENDIF.
 
-        ls_result-slt = lv_slt_text.
+        CLEAR ls_result-esd.
       ENDIF.
 
     ENDIF.
@@ -64,6 +60,3 @@ METHOD get_parts_lookup_data.
 
 ENDMETHOD.
 
-" Text symbols (maintain in SE38/SE80 text elements):
-" TEXT-001  EN: week(s)       FR: semaine(s)
-" TEXT-002  EN: Dropship      FR: Livraison directe

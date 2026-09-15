@@ -31,19 +31,18 @@ METHOD get_slt
    - Plant **3037** (LGORT 3710) — third
 3. Uses the first plant where the material exists, regardless of PLIFZ value (including 0).
 4. Calculates weeks: `CEIL( ( PLIFZ + 5 ) / 7 )`.
-5. Returns `MATNR` + `SLT` (integer weeks only).
+5. Returns `MATNR` + `SLT` as `CHAR35` formatted text, e.g. `6 week(s)`.
 
 ## Handled by the calling method (not GET_SLT)
 
 - Active / Discontinued status check
-- MTPOS = `ZBNS` dropship prefix
+- MTPOS = `ZBNS` dropship prefix (`Dropship - XX week(s)`)
 - Clearing ESD when SLT is shown
-- EN/FR display text (`week(s)` / `semaine(s)`)
 
 ## Formula examples
 
-| PLIFZ (days) | Calculation | SLT (weeks) |
-|--------------|-------------|-------------|
-| 32 | (32+5)/7 = 5.29 | 6 |
-| 0 | (0+5)/7 = 0.71 | 1 |
-| 2 | (2+5)/7 = 1.00 | 1 |
+| PLIFZ (days) | Calculation | SLT output |
+|--------------|-------------|------------|
+| 32 | (32+5)/7 = 5.29 | `6 week(s)` |
+| 0 | (0+5)/7 = 0.71 | `1 week(s)` |
+| 2 | (2+5)/7 = 1.00 | `1 week(s)` |
